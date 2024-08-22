@@ -4,8 +4,8 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>key-deriv</artifactId>
-    <groupId>com.ameschot.keyderiv</groupId>
+    <artifactId>slip-10-key-derivation</artifactId>
+    <groupId>com.ameschot.keyderiv.slip10</groupId>
     <version>1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
@@ -73,6 +73,14 @@
             <version>1.16.0</version>
         </dependency>
 
+        <!-- https://mvnrepository.com/artifact/com.fortanix/sdkms-client -->
+        <dependency>
+            <groupId>com.fortanix</groupId>
+            <artifactId>sdkms-client</artifactId>
+            <version>4.31.2462</version>
+        </dependency>
+
+
 
 
     </dependencies>
@@ -116,6 +124,14 @@
                 <version>1.6.0</version>
                 <configuration>
                     <mainClass>MainKt</mainClass>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>9</source>
+                    <target>9</target>
                 </configuration>
             </plugin>
         </plugins>

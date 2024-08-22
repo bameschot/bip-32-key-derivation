@@ -1,4 +1,4 @@
-package com.ameschot.keyderiv.functions
+package com.ameschot.keyderiv.slip10.functions
 
 import com.nimbusds.jose.jwk.Curve
 import com.nimbusds.jose.jwk.ECKey

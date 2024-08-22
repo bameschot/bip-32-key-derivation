@@ -1,4 +1,4 @@
-package com.ameschot.keyderiv.functions
+package com.ameschot.keyderiv.slip10.functions
 
 import org.bouncycastle.crypto.digests.SHA512Digest
 import org.bouncycastle.crypto.macs.HMac

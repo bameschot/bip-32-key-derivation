@@ -1,18 +1,21 @@
-package com.ameschot.keyderiv
+package com.ameschot.keyderiv.slip10
 
 
-import com.ameschot.keyderiv.functions.*
+import com.ameschot.keyderiv.slip10.functions.*
 import io.github.novacrypto.base58.Base58
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.junit.jupiter.api.Test
 import java.security.Security
 import kotlin.test.assertEquals
 
-class VectorTest {
+class BIP32VectorTest {
+
+    var curve:Curve;
 
     init {
         Security.insertProviderAt(BouncyCastleProvider(), 1)
         Security.setProperty("crypto.policy", "unlimited");
+        curve = Curve.secp256k1
     }
 
     @Test
@@ -181,13 +184,13 @@ class VectorTest {
         //TODO: parse
         val sb = hexToByte("000102030405060708090a0b0c0d0e0f")
         //BigInteger("000102030405060708090a0b0c0d0e0f",16).toByteArray().copyInto(sb,1)
-        val extendedMasterPrvKey = seed(sb)
+        val extendedMasterPrvKey = seed(sb,curve)
         val resPrv = btcSerPriv(extendedMasterPrvKey, ser32(0x00000000),0x0,0)
 
         val resDecode = Base58.base58Decode(resPrv)
         //println(byteToHex(resDecode.sliceArray(13..33)))
 
-        val extendedMasterPubKey = N(extendedMasterPrvKey)
+        val extendedMasterPubKey = N(extendedMasterPrvKey, curve)
         val resPub = btcSerPub(extendedMasterPubKey, ser32(0x00000000),0x0,0)
 
         println("vec prv: $pkvPrv")
@@ -196,8 +199,8 @@ class VectorTest {
         println("vec pub: $pkvPub")
         println("res pub: $resPub")
 
-        val extendedPrvKey_1 = CKDPriv(extendedMasterPrvKey, HARDENED_KEY_IDX)
-        val extendedPubKey_1 = N(extendedPrvKey_1)
+        val extendedPrvKey_1 = CKDPriv(extendedMasterPrvKey, HARDENED_KEY_IDX, curve = curve)
+        val extendedPubKey_1 = N(extendedPrvKey_1, curve)
         val prv1_fp = fingerprintFromPublic(extendedMasterPubKey)
         println(byteToHex(prv1_fp))
         println("3442193e")
@@ -205,7 +208,7 @@ class VectorTest {
         val resPub_1 = btcSerPub(extendedPubKey_1, prv1_fp,0x01, HARDENED_KEY_IDX)
 
         //0x3442193e
-        val resss = deriveFromPath(extendedMasterPrvKey,"m/0H")
+        val resss = deriveFromPath(extendedMasterPrvKey,"m/0H", curve =  curve)
 
         println("vec prv_1h: xprv9uHRZZhk6KAJC1avXpDAp4MDc3sQKNxDiPvvkX8Br5ngLNv1TxvUxt4cV1rGL5hj6KCesnDYUhd7oWgT11eZG7XnxHrnYeSvkzY7d2bhkJ7")
         println("res prv_1h: $resPrv_1")
@@ -222,7 +225,7 @@ class VectorTest {
     }
 
     fun testVector(seed:ByteArray,path:String,vectorB58PubKey :String,vectorB58PrivKey:String){
-        val kp = deriveFromPath(seed,path)
+        val kp = deriveFromPath(seed,path, curve = curve)
         println("--------------------------------------------")
         println(path)
 

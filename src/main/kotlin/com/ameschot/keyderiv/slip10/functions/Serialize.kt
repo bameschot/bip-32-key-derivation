@@ -1,4 +1,4 @@
-package com.ameschot.keyderiv.functions
+package com.ameschot.keyderiv.slip10.functions
 
 import org.bouncycastle.math.ec.ECPoint
 import java.math.BigInteger

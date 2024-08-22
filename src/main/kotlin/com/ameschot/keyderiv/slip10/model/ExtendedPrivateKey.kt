@@ -1,4 +1,4 @@
-package com.ameschot.keyderiv.model
+package com.ameschot.keyderiv.slip10.model
 
 import java.math.BigInteger
 

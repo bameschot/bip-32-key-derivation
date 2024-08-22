@@ -1,10 +1,11 @@
-package com.ameschot.keyderiv.functions
+package com.ameschot.keyderiv.slip10.functions
 
 import io.github.novacrypto.base58.Base58
-import com.ameschot.keyderiv.model.ExtendedPrivateKey
-import com.ameschot.keyderiv.model.ExtendedPublicKey
+import com.ameschot.keyderiv.slip10.model.ExtendedPrivateKey
+import com.ameschot.keyderiv.slip10.model.ExtendedPublicKey
 import org.apache.commons.codec.binary.Hex
 import java.math.BigInteger
+import java.util.Base64
 
 
 val VERSION_MAIN_PUB  = BigInteger.valueOf(0x0488B21E).toByteArray()
@@ -42,6 +43,12 @@ fun btcSerPriv(extendedPrivateKey: ExtendedPrivateKey, parentFingerprint:ByteArr
     return Base58.base58Encode(out)!!
 }
 
+fun serPub(key:String){
+    val bytes = Base58.base58Decode("xpubBIiyHgHfZtNKgAAAAAvPWubeODconHIdHb6YLx+JbtGV53Ha9TPorlGXn1g9AkZh1IJZ4NsITXdTi+AMw8So4ywOAdToDey6axhKkwK2")
+
+
+}
+
 fun btcSerPub(extendedPublicKey: ExtendedPublicKey, parentFingerprint:ByteArray, depth:Byte, i:Long):String{
     val out = ByteArray(78+4)
 
@@ -68,13 +75,6 @@ fun btcSerPub(extendedPublicKey: ExtendedPublicKey, parentFingerprint:ByteArray,
 
     return Base58.base58Encode(out)!!
 }
-
-fun fingerprintFromPrivate(extendedPrivateKey: ExtendedPrivateKey):ByteArray{
-    val fp = ByteArray(4)
-    HASH160(serP(point(extendedPrivateKey.k))).copyInto(fp,0,0,4)
-    return fp;
-}
-
 fun fingerprintFromPublic(extendedPublicKey: ExtendedPublicKey):ByteArray{
     val fp = ByteArray(4)
     HASH160(serP(extendedPublicKey.K)).copyInto(fp,0,0,4)

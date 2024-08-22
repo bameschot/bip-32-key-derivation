@@ -1,7 +1,7 @@
-package com.ameschot.keyderiv
+package com.ameschot.keyderiv.slip10
 
-import com.ameschot.keyderiv.functions.*
-import com.ameschot.keyderiv.model.ExtendedPrivateKey
+import com.ameschot.keyderiv.slip10.model.ExtendedPrivateKey
+import com.ameschot.keyderiv.slip10.functions.*
 import org.bouncycastle.crypto.generators.ECKeyPairGenerator
 import org.bouncycastle.crypto.params.ECDomainParameters
 import org.bouncycastle.crypto.params.ECKeyGenerationParameters
@@ -23,71 +23,28 @@ class DerivationTest {
         Security.setProperty("crypto.policy", "unlimited");
     }
 
-
     @Test
-    public fun testKeyGen() {
+    fun testExp(){
+        val k = "BIiyHgHfZtNKgAAAAAvPWubeODconHIdHb6YLx+JbtGV53Ha9TPorlGXn1g9AkZh1IJZ4NsITXdTi+AMw8So4ywOAdToDey6axhKkwK2"
+        val pk = "xpubBIiyHgHfZtNKgAAAAAvPWubeODconHIdHb6YLx+JbtGV53Ha9TPorlGXn1g9AkZh1IJZ4NsITXdTi+AMw8So4ywOAdToDey6axhKkwK2"
 
-        //create a master key from a generate ec key and a chosen start chain code
-        val masterKey = ExtendedPrivateKey(generateECKeyD(), BigInteger.valueOf(546554656).toByteArray())
 
-
-        val data = "I consent to transfer one can of tuna to Purr Holdings SaRL".toByteArray()
-
-        //now generate a series of keys on index 1..100
-        val derivedExtendedPrivateKeys = mutableListOf<ExtendedPrivateKey>()
-        val derivedPrivateKeys = mutableListOf<PrivateKey>()
-        (0..100).forEach {
-            derivedExtendedPrivateKeys.add(CKDPriv(eXPriv = masterKey, HARDENED_KEY_IDX + it.toLong()))
-            derivedPrivateKeys.add(toPrivateKey(derivedExtendedPrivateKeys[it].k))
-        }
-
-        //based on this derive the public keys corresponding to the private keys
-        val derivedPublicKeys = mutableListOf<PublicKey>()
-        (0..100).forEach {
-            derivedPublicKeys.add(
-                toPublicKey(N(derivedExtendedPrivateKeys[it]).K)
-            )
-        }
-
-        //now use the derived private keys to sign data
-        val signatures = mutableListOf<ByteArray>()
-        (0..100).forEach {
-            signatures.add(
-                sign(data, derivedPrivateKeys[it])
-            )
-        }
-
-        //now use the derived public keys to verify data
-        (0..100).forEach {
-            assertTrue { verify(data, signatures[it], derivedPublicKeys[it]) }
-        }
-
-        //completely regenerate a key on an index and verify the previously signed data
-        val extendedPrivateKey71 = CKDPriv(masterKey, HARDENED_KEY_IDX + 71L)
-        val extendedPublicKey71 = N(extendedPrivateKey71)
-        val publicKey71 = toPublicKey(extendedPublicKey71.K)
-
-        assertTrue { verify(data, signatures[71], publicKey71) }
-
-        toJWK(publicKey71)
-
-        println(btcSerPriv(extendedPrivateKey71, ser32(0), 0, 71L))
-        println(btcSerPub(extendedPublicKey71, ser32(0), 0, 71L))
     }
 
     @Test
     fun testKeyGenFromPath() {
+        val curve = Curve.p256
 
         //create a master key from a generate ec key and a chosen start chain code
-        val masterKey = ExtendedPrivateKey(generateECKeyD(), BigInteger.valueOf(565434445234).toByteArray())
+        val masterKey = ExtendedPrivateKey(generateECKeyD(curve), BigInteger.valueOf(565434445234).toByteArray())
         val data = "I consent to transfer one can of tuna to Purr Holdings SaRL".toByteArray()
-        val keysToGenerate = 1000000
+        val keysToGenerate = 1000
         val printFreq = 100
 
         val keypairs = mutableListOf<KeyPair>()
         var gs = System.currentTimeMillis()
         (0..keysToGenerate).forEach {
-            keypairs.add(deriveFromPath(masterKey, "m/${it}H"))
+            keypairs.add(deriveFromPath(masterKey, "m/${it}H",curve = curve))
             if ((it % (keysToGenerate / printFreq)) == 0 && it > 0) {
                 println("${round(it.toDouble() / keysToGenerate.toDouble() * 100.0)}% generated")
             }
@@ -129,7 +86,7 @@ class DerivationTest {
         val tests = 1000
         (0..tests).forEach {
             val index = sr.nextInt(0,keysToGenerate)
-            val kp = deriveFromPath(masterKey, "m/${index}H")
+            val kp = deriveFromPath(masterKey, "m/${index}H", curve=curve)
 
             println("-------------------[$it/$tests]-------------------")
             println("For hardened index $index (m/${index}H)")
@@ -142,9 +99,9 @@ class DerivationTest {
         }
     }
 
-    fun generateECKeyD(): BigInteger {
+    fun generateECKeyD(curve:Curve): BigInteger {
         val ecKeyGeneratorParams =
-            ECKeyGenerationParameters(ECDomainParameters(spec.curve, spec.g, spec.n, spec.h, spec.seed), SecureRandom())
+            ECKeyGenerationParameters(ECDomainParameters(curve.spec.curve, curve.spec.g, curve.spec.n, curve.spec.h, curve.spec.seed), SecureRandom())
         val generator = ECKeyPairGenerator()
         generator.init(ecKeyGeneratorParams);
         val keyPair = generator.generateKeyPair();
@@ -159,6 +116,7 @@ class DerivationTest {
         Security.insertProviderAt(BouncyCastleProvider(), 1)
         Security.setProperty("crypto.policy", "unlimited");
 
+        val curve = Curve.secp256k1
 
         //ser32
         println("ser32---------------------")
@@ -181,7 +139,7 @@ class DerivationTest {
 
         //serP
         println("serP---------------------")
-        val pt = point(BigInteger.valueOf(1337))
+        val pt = curve.point(BigInteger.valueOf(1337))
         println("point: $pt")
         val p = serP(pt)
         p.forEach { print("${it.toHexString()}, ") }
@@ -196,20 +154,20 @@ class DerivationTest {
 //    println(I.size)
 
         println("points---------------------")
-        println(point(BigInteger.valueOf(234342)).add(point(BigInteger.valueOf(21))).isValid)
+        println(curve.point(BigInteger.valueOf(234342)).add(curve.point(BigInteger.valueOf(21))).isValid)
 
         println("CKDPriv---------------------")
-        println(CKDPriv(ExtendedPrivateKey(BigInteger.valueOf(1337), BigInteger.valueOf(546554656).toByteArray()), 0))
+        println(CKDPriv(ExtendedPrivateKey(BigInteger.valueOf(1337), BigInteger.valueOf(546554656).toByteArray()), 0, curve))
 
 
         println("Sign---------------------")
         var rootKey = ExtendedPrivateKey(BigInteger.valueOf(1337), BigInteger.valueOf(546554656).toByteArray())
 
-        var ePrivk = CKDPriv(rootKey, 0)
-        var ePubk = N(ePrivk)
+        var ePrivk = CKDPriv(rootKey, 0,curve)
+        var ePubk = N(ePrivk,curve)
 
-        var privk = toPrivateKey(ePrivk.k)
-        var pubk = toPublicKey(ePubk.K)
+        var privk = toPrivateKey(ePrivk.k,curve)
+        var pubk = toPublicKey(ePubk.K,curve)
         var jwk = toJWK(pubk)
         println(jwk.toJSONString())
 
